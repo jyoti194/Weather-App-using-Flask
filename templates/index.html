@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weather App</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #343a40;
+            color: white;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .weather-item {
+            font-size: 1.5em; /* Increased font size */
+            margin: 20px 0; /* Increased margin */
+            text-align: center; /* Center-align text */
+        }
+        .weather-icon {
+            margin-right: 15px; /* Increased margin */
+            font-size: 2em; /* Increased icon size */
+            color: #ffc107; /* Icon color */
+        }
+    </style>
+    <script>
+        async function fetchWeather() {
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const country = document.getElementById('country').value;
+
+            try {
+                const response = await fetch('/fetch_weather', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ city: city, state: state, country: country })
+                });
+
+                const weatherData = await response.json();
+                const weatherList = document.getElementById('weather-list');
+                weatherList.innerHTML = '';
+
+                if (response.status === 201) {
+                    const tempCelsius = (weatherData.temperature - 273.15).toFixed(2);
+
+                    const temperatureItem = document.createElement('div');
+                    temperatureItem.className = 'weather-item';
+                    temperatureItem.innerHTML = `<i class="fas fa-thermometer-half weather-icon"></i> Temperature: ${tempCelsius}°C`;
+                    weatherList.appendChild(temperatureItem);
+
+                    const humidityItem = document.createElement('div');
+                    humidityItem.className = 'weather-item';
+                    humidityItem.innerHTML = `<i class="fas fa-tint weather-icon"></i> Humidity: ${weatherData.humidity}%`;
+                    weatherList.appendChild(humidityItem);
+
+                    const pressureItem = document.createElement('div');
+                    pressureItem.className = 'weather-item';
+                    pressureItem.innerHTML = `<i class="fas fa-tachometer-alt weather-icon"></i> Pressure: ${(weatherData.pressure * 0.02953).toFixed(2)} inHg`;
+                    weatherList.appendChild(pressureItem);
+
+                    const windSpeedItem = document.createElement('div');
+                    windSpeedItem.className = 'weather-item';
+                    windSpeedItem.innerHTML = `<i class="fas fa-wind weather-icon"></i> Wind Speed: ${weatherData.wind} m/s`;
+                    weatherList.appendChild(windSpeedItem);
+
+                    const weatherDescItem = document.createElement('div');
+                    weatherDescItem.className = 'weather-item';
+                    weatherDescItem.innerHTML = `<i class="fas fa-cloud weather-icon"></i> Weather: ${weatherData.weather}`;
+                    weatherList.appendChild(weatherDescItem);
+                } else {
+                    const errorItem = document.createElement('div');
+                    errorItem.className = 'weather-item';
+                    errorItem.innerHTML = `<i class="fas fa-exclamation-triangle weather-icon"></i> ${weatherData.error}`;
+                    weatherList.appendChild(errorItem);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Weather App</h1>
+        <div class="form-row justify-content-center mb-3">
+            <div class="col-auto">
+                <input type="text" class="form-control" id="city" placeholder="City">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" id="state" placeholder="State">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" id="country" placeholder="Country">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-primary" onclick="fetchWeather()">Find</button>
+            </div>
+        </div>
+        <div id="weather-list"></div>
+    </div>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</body>
+</html>

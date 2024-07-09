@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #weather-list, #weather-details {
+            margin-top: 20px;
+        }
+        .weather-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .weather-item h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Weather App</h1>
+    <form id="fetch-weather-form">
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required>
+        <label for="state">State:</label>
+        <input type="text" id="state" name="state">
+        <label for="country">Country:</label>
+        <input type="text" id="country" name="country" required>
+        <button type="submit">Fetch Weather</button>
+    </form>
+
+    <div id="weather-details"></div>
+    <div id="weather-list"></div>
+
+    <script>
+        document.getElementById('fetch-weather-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const country = document.getElementById('country').value;
+            fetchWeather(city, state, country);
+        });
+
+        function fetchWeather(city, state, country) {
+            const data = { city, state, country };
+            fetch('/fetch_weather', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('weather-details').innerHTML = `<p>Error: ${data.error}</p>`;
+                } else {
+                    document.getElementById('weather-details').innerHTML = `
+                        <div class="weather-item">
+                            <h2>${data.city}</h2>
+                            <p>Temperature: ${data.temperature}</p>
+                            <p>Humidity: ${data.humidity}</p>
+                            <p>Pressure: ${data.pressure}</p>
+                            <p>Weather: ${data.weather}</p>
+                            <p>Wind: ${data.wind}</p>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function deleteWeather(city) {
+            fetch(`/weather/${city}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById(city).remove();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/weather')
+                .then(response => response.json())
+                .then(data => {
+                    const weatherList = document.getElementById('weather-list');
+                    data.forEach(weather => {
+                        const weatherItem = document.createElement('div');
+                        weatherItem.classList.add('weather-item');
+                        weatherItem.id = weather.city;
+                        weatherItem.innerHTML = `
+                            <h2>${weather.city}</h2>
+                            <p>Temperature: ${weather.temperature}</p>
+                            <p>Humidity: ${weather.humidity}</p>
+                            <p>Pressure: ${weather.pressure}</p>
+                            <p>Weather: ${weather.weather}</p>
+                            <p>Wind: ${weather.wind}</p>
+                            <button onclick="deleteWeather('${weather.city}')">Delete</button>
+                        `;
+                        weatherList.appendChild(weatherItem);
+                    });
+                });
+        });
+    </script>
+</body>
+</html>
