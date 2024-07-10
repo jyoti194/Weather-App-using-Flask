@@ -3,7 +3,7 @@ from flask import Flask, request, jsonify, render_template
 import sqlite3
 import requests
 
-app = Flask(__name__)
+application = Flask(__name__)
 
 API_KEY = '7587a0e856f44270a904e68b101900e4'
 URL = "http://api.openweathermap.org/data/2.5/weather?q={}&appid=" + API_KEY
