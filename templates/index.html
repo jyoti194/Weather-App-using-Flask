@@ -13,14 +13,14 @@
             margin-top: 50px;
         }
         .weather-item {
-            font-size: 1.5em; /* Increased font size */
-            margin: 20px 0; /* Increased margin */
-            text-align: center; /* Center-align text */
+            font-size: 1.5em;
+            margin: 20px 0;
+            text-align: center;
         }
         .weather-icon {
-            margin-right: 15px; /* Increased margin */
-            font-size: 2em; /* Increased icon size */
-            color: #ffc107; /* Icon color */
+            margin-right: 15px;
+            font-size: 2em;
+            color: #ffc107;
         }
     </style>
     <script>
@@ -43,41 +43,106 @@
                 weatherList.innerHTML = '';
 
                 if (response.status === 201) {
-                    const tempCelsius = (weatherData.temperature - 273.15).toFixed(2);
-
-                    const temperatureItem = document.createElement('div');
-                    temperatureItem.className = 'weather-item';
-                    temperatureItem.innerHTML = `<i class="fas fa-thermometer-half weather-icon"></i> Temperature: ${tempCelsius}°C`;
-                    weatherList.appendChild(temperatureItem);
-
-                    const humidityItem = document.createElement('div');
-                    humidityItem.className = 'weather-item';
-                    humidityItem.innerHTML = `<i class="fas fa-tint weather-icon"></i> Humidity: ${weatherData.humidity}%`;
-                    weatherList.appendChild(humidityItem);
-
-                    const pressureItem = document.createElement('div');
-                    pressureItem.className = 'weather-item';
-                    pressureItem.innerHTML = `<i class="fas fa-tachometer-alt weather-icon"></i> Pressure: ${(weatherData.pressure * 0.02953).toFixed(2)} inHg`;
-                    weatherList.appendChild(pressureItem);
-
-                    const windSpeedItem = document.createElement('div');
-                    windSpeedItem.className = 'weather-item';
-                    windSpeedItem.innerHTML = `<i class="fas fa-wind weather-icon"></i> Wind Speed: ${weatherData.wind} m/s`;
-                    weatherList.appendChild(windSpeedItem);
-
-                    const weatherDescItem = document.createElement('div');
-                    weatherDescItem.className = 'weather-item';
-                    weatherDescItem.innerHTML = `<i class="fas fa-cloud weather-icon"></i> Weather: ${weatherData.weather}`;
-                    weatherList.appendChild(weatherDescItem);
+                    displayWeather(weatherData);
                 } else {
-                    const errorItem = document.createElement('div');
-                    errorItem.className = 'weather-item';
-                    errorItem.innerHTML = `<i class="fas fa-exclamation-triangle weather-icon"></i> ${weatherData.error}`;
-                    weatherList.appendChild(errorItem);
+                    displayError(weatherData.error);
                 }
             } catch (error) {
                 console.error('Error:', error);
             }
+        }
+
+        async function retrieveWeather() {
+            const city = document.getElementById('retrieve-city').value;
+
+            try {
+                const response = await fetch(`/weather/${city}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const weatherData = await response.json();
+                const weatherList = document.getElementById('weather-list');
+                weatherList.innerHTML = '';
+
+                if (response.status === 200) {
+                    displayWeather(weatherData);
+                } else {
+                    displayError(weatherData.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function updateWeather() {
+            const city = document.getElementById('update-city').value;
+            const temperature = document.getElementById('update-temperature').value;
+            const humidity = document.getElementById('update-humidity').value;
+            const pressure = document.getElementById('update-pressure').value;
+            const weather = document.getElementById('update-weather').value;
+            const wind = document.getElementById('update-wind').value;
+
+            try {
+                const response = await fetch(`/weather/${city}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ temperature: temperature, humidity: humidity, pressure: pressure, weather: weather, wind: wind })
+                });
+
+                const result = await response.text();
+                displayMessage(result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function deleteWeather() {
+            const city = document.getElementById('delete-city').value;
+
+            try {
+                const response = await fetch(`/weather/${city}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.text();
+                displayMessage(result);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayWeather(weatherData) {
+            const weatherList = document.getElementById('weather-list');
+            weatherList.innerHTML = `
+                <div class="weather-item"><i class="fas fa-city weather-icon"></i> City: ${weatherData.city}</div>
+                <div class="weather-item"><i class="fas fa-thermometer-half weather-icon"></i> Temperature: ${weatherData.temperature}°C</div>
+                <div class="weather-item"><i class="fas fa-tint weather-icon"></i> Humidity: ${weatherData.humidity}%</div>
+                <div class="weather-item"><i class="fas fa-tachometer-alt weather-icon"></i> Pressure: ${weatherData.pressure} inHg</div>
+                <div class="weather-item"><i class="fas fa-cloud weather-icon"></i> Weather: ${weatherData.weather}</div>
+                <div class="weather-item"><i class="fas fa-wind weather-icon"></i> Wind: ${weatherData.wind} m/s</div>
+            `;
+        }
+
+        function displayError(error) {
+            const weatherList = document.getElementById('weather-list');
+            weatherList.innerHTML = `
+                <div class="weather-item"><i class="fas fa-exclamation-triangle weather-icon"></i> ${error}</div>
+            `;
+        }
+
+        function displayMessage(message) {
+            const weatherList = document.getElementById('weather-list');
+            weatherList.innerHTML = `
+                <div class="weather-item"><i class="fas fa-info-circle weather-icon"></i> ${message}</div>
+            `;
         }
     </script>
 </head>
@@ -95,10 +160,61 @@
                 <input type="text" class="form-control" id="country" placeholder="Country">
             </div>
             <div class="col-auto">
-                <button class="btn btn-primary" onclick="fetchWeather()">Find</button>
+                <button class="btn btn-primary" onclick="fetchWeather()">Fetch Weather</button>
             </div>
         </div>
         <div id="weather-list"></div>
+        
+        <hr>
+        
+        <h2 class="text-center mb-4">Retrieve Weather Data</h2>
+        <div class="form-row justify-content-center mb-3">
+            <div class="col-auto">
+                <input type="text" class="form-control" id="retrieve-city" placeholder="City">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-secondary" onclick="retrieveWeather()">Retrieve Weather</button>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h2 class="text-center mb-4">Update Weather Data</h2>
+        <div class="form-row justify-content-center mb-3">
+            <div class="col-auto">
+                <input type="text" class="form-control" id="update-city" placeholder="City">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" id="update-temperature" placeholder="Temperature (°C)">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" id="update-humidity" placeholder="Humidity (%)">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" id="update-pressure" placeholder="Pressure (inHg)">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" id="update-weather" placeholder="Weather">
+            </div>
+            <div class="col-auto">
+                <input type="text" class="form-control" id="update-wind" placeholder="Wind (m/s)">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-warning" onclick="updateWeather()">Update Weather</button>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h2 class="text-center mb-4">Delete Weather Data</h2>
+        <div class="form-row justify-content-center mb-3">
+            <div class="col-auto">
+                <input type="text" class="form-control" id="delete-city" placeholder="City">
+            </div>
+            <div class="col-auto">
+                <button class="btn btn-danger" onclick="deleteWeather()">Delete Weather</button>
+            </div>
+        </div>
     </div>
     <script src="https://kit.fontawesome.com/a076d05399.js"></script>
 </body>
