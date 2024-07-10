@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, render_template
 import sqlite3
 import requests
@@ -12,14 +11,35 @@ def db_connection():
     conn = None
     try:
         conn = sqlite3.connect('weather.db')
-    except sqlite3.error as e:
+    except sqlite3.Error as e:
         print(e)
     return conn
 
 def convert_units(weather_data):
-    weather_data['temperature'] = round(weather_data['temperature'] - 273.15, 2)  # Kelvin to Celsius
-    weather_data['pressure'] = round(weather_data['pressure'] * 0.02953, 2)  # hPa to inHg
-    return weather_data
+    try:
+        # Convert temperature to float if it's a string
+        if isinstance(weather_data['temperature'], str):
+            weather_data['temperature'] = float(weather_data['temperature'])
+        
+        # Convert pressure to float if it's a string
+        if isinstance(weather_data['pressure'], str):
+            weather_data['pressure'] = float(weather_data['pressure'])
+        
+        # Convert wind to float if it's a string
+        if isinstance(weather_data['wind'], str):
+            weather_data['wind'] = float(weather_data['wind'])
+        
+        # Ensure weather remains a string
+        if not isinstance(weather_data['weather'], str):
+            weather_data['weather'] = str(weather_data['weather'])
+        
+        return weather_data
+    except KeyError as e:
+        print(f"KeyError in convert_units: {e}")
+        raise  # Raising the KeyError for debugging purposes
+    except Exception as e:
+        print(f"Error in convert_units: {e}")
+        raise  # Raising the exception for debugging purposes
 
 @app.route('/')
 def index():
@@ -30,7 +50,6 @@ def fetch_weather():
     try:
         data = request.get_json()
         city = data.get('city')
-        state = data.get('state')
         country = data.get('country')
 
         location = f"{city},{country}"
@@ -68,7 +87,6 @@ def fetch_weather():
 def single_weather(city):
     conn = db_connection()
     cursor = conn.cursor()
-    weather = None
     
     if request.method == 'GET':
         cursor.execute("SELECT * FROM weather WHERE city LIKE ?", (f"%{city}%",))
@@ -87,20 +105,27 @@ def single_weather(city):
         else:
             return jsonify({"error": "City not found"}), 404
 
-    if request.method == 'PUT':
-        sql = """UPDATE weather
-                 SET temperature=?,
-                     humidity=?,
-                     pressure=?,
-                     weather=?
-                 WHERE city LIKE ?"""
-        updated_weather = request.get_json()
-        updated_weather = convert_units(updated_weather)
-        conn.execute(sql, (updated_weather["temperature"], updated_weather["humidity"], updated_weather["pressure"], updated_weather["weather"], f"%{city}%"))
-        conn.commit()
-        return f"Weather data for {city} updated successfully!", 200
+    elif request.method == 'PUT':
+        try:
+            updated_weather = request.get_json()
+            updated_weather = convert_units(updated_weather)
+            
+            sql = """UPDATE weather
+                     SET temperature=?,
+                         humidity=?,
+                         pressure=?,
+                         weather=?,
+                         wind=?
+                     WHERE city LIKE ?"""
+            conn.execute(sql, (updated_weather["temperature"], updated_weather["humidity"], updated_weather["pressure"], updated_weather["weather"], updated_weather["wind"], f"%{city}%"))
+            conn.commit()
+            
+            return f"Weather data for {city} updated successfully!", 200
+        except Exception as e:
+            print(f"Error updating weather data: {e}")
+            return jsonify({"error": "An error occurred while updating weather data"}), 500
 
-    if request.method == 'DELETE':
+    elif request.method == 'DELETE':
         sql = """ DELETE FROM weather WHERE city LIKE ? """
         conn.execute(sql, (f"%{city}%",))
         conn.commit()
