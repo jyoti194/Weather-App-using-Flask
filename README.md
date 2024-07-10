@@ -1,3 +1,5 @@
+The Weather App is a web application built using Python and Flask that allows users to fetch, store, and manage weather data for different cities. It utilizes the OpenWeather API to fetch real-time weather information and stores the data in a SQLite database. The application provides an intuitive user interface where users can view the weather data, add new weather records, update existing records, and delete records.
+
 Features:
 
 * Fetches real-time weather data from the OpenWeather API.
