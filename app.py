@@ -17,13 +17,13 @@ def db_connection():
 
 def convert_units(weather_data):
     try:
-        # Convert temperature to float if it's a string
-        if isinstance(weather_data['temperature'], str):
-            weather_data['temperature'] = float(weather_data['temperature'])
+        # Convert temperature from Kelvin to Celsius and round to 2 decimal places
+        if isinstance(weather_data['temperature'], (float, int)):
+            weather_data['temperature'] = round(weather_data['temperature'] - 273.15, 2)
         
-        # Convert pressure to float if it's a string
-        if isinstance(weather_data['pressure'], str):
-            weather_data['pressure'] = float(weather_data['pressure'])
+        # Convert pressure from hPa to inHg and round to 2 decimal places
+        if isinstance(weather_data['pressure'], (float, int)):
+            weather_data['pressure'] = round(weather_data['pressure'] * 0.02953, 2)
         
         # Convert wind to float if it's a string
         if isinstance(weather_data['wind'], str):
